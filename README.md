@@ -1,0 +1,1 @@
+Tom's non-standard library of useful classes and functions.
