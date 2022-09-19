@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "nonstd"
-version = "0.0.0"
+version = "0.0.1"
 description = "Tom's non-standard library of useful classes and functions."
 authors = ["tadamcz <tadamczewskipublic@gmail.com>"]
 readme = "README.md"
+homepage = "https://github.com/tadamcz/nonstd"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.12"
