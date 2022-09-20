@@ -1,16 +1,11 @@
 import collections.abc
-from typing import Iterable, Optional
+from typing import Optional
 
 
-class OneIndexedList(collections.abc.MutableSequence):
+class OneIndexedList(collections.UserList):
 	"""
 	Behaves like a regular Python ``list``, but with the index starting at 1 instead of 0.
 	"""
-
-	def __init__(self, init: list = None) -> None:
-		self._wrapped = []
-		if init is not None:
-			self._wrapped.extend(init)
 
 	def _wrapped_index(self, index: [int, slice]) -> [int, slice]:
 		if isinstance(index, slice):
@@ -36,42 +31,25 @@ class OneIndexedList(collections.abc.MutableSequence):
 
 	def __getitem__(self, index: [int, slice]) -> any:
 		wrapped_i = self._wrapped_index(index)
-		return self._wrapped[wrapped_i]
+		return super(OneIndexedList, self).__getitem__(wrapped_i)
 
 	def __setitem__(self, index: [int, slice], val: any) -> None:
 		wrapped_i = self._wrapped_index(index)
-		self._wrapped[wrapped_i] = val
+		super(OneIndexedList, self).__setitem__(wrapped_i, val)
 
 	def __delitem__(self, index: [int, slice]) -> None:
 		wrapped_i = self._wrapped_index(index)
-		del self._wrapped[wrapped_i]
+		super(OneIndexedList, self).__delitem__(wrapped_i)
 
 	def insert(self, index: [int, slice], val: any) -> None:
 		wrapped_i = self._wrapped_index(index)
-		self._wrapped.insert(wrapped_i, val)
-
-	def __len__(self) -> int:
-		return len(self._wrapped)
-
-	def __repr__(self) -> str:
-		return f"{self._wrapped}"
-
-	def __eq__(self, other) -> bool:
-		if not isinstance(other, OneIndexedList):
-			raise NotImplementedError(f"Cannot compare a `OneIndexedList` to a {other.__class__.__name__}")
-		return self._wrapped == other._wrapped
-
-	def append(self, value: any) -> None:
-		self._wrapped.append(value)
-
-	def extend(self, values: Iterable) -> None:
-		self._wrapped.extend(values)
+		super(OneIndexedList, self).insert(wrapped_i, val)
 
 	def pop(self, index: Optional[int] = None) -> any:
 		if index is None:
-			return self._wrapped.pop()
+			return self.data.pop()
 		wrapped_i = self._wrapped_index(index)
-		return self._wrapped.pop(wrapped_i)
+		return super(OneIndexedList, self).pop(wrapped_i)
 
 	def index(self, value: any, start: int = None, stop: int = None) -> int:
 		if start is None:
@@ -81,21 +59,15 @@ class OneIndexedList(collections.abc.MutableSequence):
 
 		wrapped_start = self._wrapped_index(start)
 		wrapped_stop = self._wrapped_index(stop)
-		wrapped_i = self._wrapped.index(value, wrapped_start, wrapped_stop)
+		wrapped_result = super(OneIndexedList, self).index(value, wrapped_start, wrapped_stop)
 
-		return wrapped_i + 1
+		return wrapped_result + 1
 
-	def reverse(self) -> None:
-		self._wrapped.reverse()
+	def __eq__(self, other) -> bool:
+		if not isinstance(other, OneIndexedList):
+			# This is a judgement call. One could also follow ``UserList``, which allows comparisons to a simple ``list``.
+			raise NotImplementedError(f"Cannot compare a `OneIndexedList` to a {other.__class__.__name__}")
+		return self.data == other.data
 
-	def sort(self, key=None, reverse=False):
-		self._wrapped.sort(key=key, reverse=reverse)
-
-	def remove(self, value: any):
-		self._wrapped.remove(value)
-
-	def count(self, value: any) -> int:
-		return self._wrapped.count(value)
-
-	def copy(self):
-		return OneIndexedList(self._wrapped)
+	def __iter__(self):
+		yield from self.data.__iter__()

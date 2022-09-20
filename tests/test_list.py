@@ -24,6 +24,8 @@ class TestOneIndexedList:
 	- accessing by an index (integer or slice) using subscript notation, i.e. ``one_indexed_list[start:stop:step]``
 	- equality comparisons
 	- ``len(one_indexed_list)``
+	- checking membership, i.e. ``member in one_indexed_list``
+	- iterating through the list
 
 	[1] https://docs.python.org/3.8/tutorial/datastructures.html
 	"""
@@ -76,7 +78,10 @@ class TestOneIndexedList:
 
 		assert oil.index("waldo", start=2) == 3
 		assert oil.index("waldo", start=1) == 1
-		assert oil.index("waldo") == 1
+		assert oil.index("waldo", stop=2) == 1
+
+		with pytest.raises(ValueError):
+			OneIndexedList([1, 2, 3]).index(3, stop=2)
 
 		with pytest.raises(ValueError):
 			oil.index(99)
@@ -107,7 +112,7 @@ class TestOneIndexedList:
 		del oil
 		assert oil2[1] == 1
 
-	def test_index_integer(self):
+	def test_access_integer(self):
 		oil = OneIndexedList([1, 2])
 		with pytest.raises(IndexError):
 			oil[0]
@@ -120,27 +125,27 @@ class TestOneIndexedList:
 		assert oil[-1] == 2
 		assert oil[-2] == 1
 
-	def test_index_slice(self):
+	def test_access_slice(self):
 		oil = OneIndexedList([1, 2, 3])
-		assert oil[1:2] == [1]
-		assert oil[:2] == [1]
+		assert oil[1:2] == OneIndexedList([1])
+		assert oil[:2] == OneIndexedList([1])
 
-		assert oil[2:4] == [2, 3]
-		assert oil[2:] == [2, 3]
+		assert oil[2:4] == OneIndexedList([2, 3])
+		assert oil[2:] == OneIndexedList([2, 3])
 
-		assert oil[1:3] == [1, 2]
+		assert oil[1:3] == OneIndexedList([1, 2])
 
-		assert oil[:4] == [1, 2, 3]
-		assert oil[:1] == []
+		assert oil[:4] == OneIndexedList([1, 2, 3])
+		assert oil[:1] == OneIndexedList([])
 
-		assert oil[:4:2] == [1, 3]
-		assert oil[1:4:2] == [1, 3]
+		assert oil[:4:2] == OneIndexedList([1, 3])
+		assert oil[1:4:2] == OneIndexedList([1, 3])
 
-		assert oil[-2:] == [2, 3]
-		assert oil[:-2] == [1]
+		assert oil[-2:] == OneIndexedList([2, 3])
+		assert oil[:-2] == OneIndexedList([1])
 
-		assert oil[::-1] == [3, 2, 1]
-		assert oil[2::-1] == [2, 1]
+		assert oil[::-1] == OneIndexedList([3, 2, 1])
+		assert oil[2::-1] == OneIndexedList([2, 1])
 
 	def test_equality(self):
 		assert OneIndexedList() == OneIndexedList()
@@ -156,3 +161,14 @@ class TestOneIndexedList:
 
 		oil = OneIndexedList([1])
 		assert len(oil) == 1
+
+	def test_contains(self):
+		oil = OneIndexedList([1, 2, 3])
+		assert 1 in oil
+		assert 4 not in oil
+
+	def test_iter(self):
+		oil = OneIndexedList([1, 2, 3])
+		assert [i for i in oil] == [1, 2, 3]
+		for _ in oil:
+			pass
