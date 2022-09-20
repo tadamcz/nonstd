@@ -5,8 +5,6 @@ from typing import Iterable, Optional
 class OneIndexedList(collections.abc.MutableSequence):
 	"""
 	Behaves like a regular Python ``list``, but with the index starting at 1 instead of 0.
-
-	Reproduces all the ``list`` methods noted here: https://docs.python.org/3.8/tutorial/datastructures.html
 	"""
 
 	def __init__(self, init: list = None) -> None:
