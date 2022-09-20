@@ -33,17 +33,17 @@ class OneIndexedList(collections.UserList):
 		wrapped_i = self._wrapped_index(index)
 		return super(OneIndexedList, self).__getitem__(wrapped_i)
 
-	def __setitem__(self, index: [int, slice], val: any) -> None:
+	def __setitem__(self, index: [int, slice], value: any) -> None:
 		wrapped_i = self._wrapped_index(index)
-		super(OneIndexedList, self).__setitem__(wrapped_i, val)
+		super(OneIndexedList, self).__setitem__(wrapped_i, value)
 
 	def __delitem__(self, index: [int, slice]) -> None:
 		wrapped_i = self._wrapped_index(index)
 		super(OneIndexedList, self).__delitem__(wrapped_i)
 
-	def insert(self, index: [int, slice], val: any) -> None:
+	def insert(self, index: [int, slice], value: any) -> None:
 		wrapped_i = self._wrapped_index(index)
-		super(OneIndexedList, self).insert(wrapped_i, val)
+		super(OneIndexedList, self).insert(wrapped_i, value)
 
 	def pop(self, index: Optional[int] = None) -> any:
 		if index is None:
