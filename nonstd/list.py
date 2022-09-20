@@ -3,9 +3,15 @@ from typing import Iterable, Optional
 
 
 class OneIndexedList(collections.abc.MutableSequence):
+	"""
+	Behaves like a regular Python ``list``, but with the index starting at 1 instead of 0.
+
+	Reproduces all the ``list`` methods noted here: https://docs.python.org/3.8/tutorial/datastructures.html
+	"""
+
 	def __init__(self, init: list = None) -> None:
 		self._wrapped = []
-		if not init is None:
+		if init is not None:
 			self._wrapped.extend(init)
 
 	def _wrapped_index(self, index: [int, slice]) -> [int, slice]:
@@ -52,7 +58,7 @@ class OneIndexedList(collections.abc.MutableSequence):
 	def __repr__(self) -> str:
 		return f"{self._wrapped}"
 
-	def __eq__(self, other):
+	def __eq__(self, other) -> bool:
 		if not isinstance(other, OneIndexedList):
 			raise NotImplementedError(f"Cannot compare a `OneIndexedList` to a {other.__class__.__name__}")
 		return self._wrapped == other._wrapped
@@ -63,13 +69,13 @@ class OneIndexedList(collections.abc.MutableSequence):
 	def extend(self, values: Iterable) -> None:
 		self._wrapped.extend(values)
 
-	def pop(self, index: Optional[int]=None) -> any:
+	def pop(self, index: Optional[int] = None) -> any:
 		if index is None:
 			return self._wrapped.pop()
 		wrapped_i = self._wrapped_index(index)
 		return self._wrapped.pop(wrapped_i)
 
-	def index(self, value: any, start: int=None, stop: int=None) -> int:
+	def index(self, value: any, start: int = None, stop: int = None) -> int:
 		if start is None:
 			start = 1
 		if stop is None:
