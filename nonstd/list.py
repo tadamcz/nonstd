@@ -5,6 +5,8 @@ from typing import Optional
 class OneIndexedList(collections.UserList):
 	"""
 	Behaves like a regular Python ``list``, but with the index starting at 1 instead of 0.
+
+	Also provides the ``dict``-like methods ``.keys()`` and ``.items()``
 	"""
 
 	def _wrapped_index(self, index: [int, slice]) -> [int, slice]:
@@ -71,3 +73,12 @@ class OneIndexedList(collections.UserList):
 
 	def __iter__(self):
 		yield from self.data.__iter__()
+
+	def keys(self):
+		return list(range(1, len(self.data) + 1))
+
+	def items(self):
+		"""
+		Behaves similarly to calling ``enumerate()`` on a regular ``list``.
+		"""
+		return [(key, self[key]) for key in self.keys()]

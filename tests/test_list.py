@@ -26,6 +26,7 @@ class TestOneIndexedList:
 	- ``len(one_indexed_list)``
 	- checking membership, i.e. ``member in one_indexed_list``
 	- iterating through the list
+	- .items() and .keys()
 
 	[1] https://docs.python.org/3.8/tutorial/datastructures.html
 	"""
@@ -172,3 +173,11 @@ class TestOneIndexedList:
 		assert [i for i in oil] == [1, 2, 3]
 		for _ in oil:
 			pass
+
+	def test_items(self):
+		oil = OneIndexedList((1, 5))
+		assert oil.items() == [(1, 1), (2, 5)]
+
+	def test_keys(self):
+		oil = OneIndexedList((1, 5))
+		assert oil.keys() == [1, 2]
