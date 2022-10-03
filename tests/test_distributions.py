@@ -2,7 +2,9 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from nonstd.distributions import lognormal, is_frozen_normal, is_frozen_lognormal, is_frozen_beta
+from nonstd.distributions import lognormal, is_frozen_normal, is_frozen_lognormal, is_frozen_beta, \
+	FrozenTwoPieceUniform, FrozenCertainty
+from nonstd.sequences import is_arithmetic_sequence
 
 
 @pytest.fixture(params=[-1, 0, 3], ids=lambda p: f"mu={p}")
@@ -49,3 +51,85 @@ def test_is_frozen():
 	# Other objects
 	assert not is_frozen_normal(12)
 	assert not is_frozen_normal(lambda x: x ** 2)
+
+
+@pytest.fixture(params=[
+	(0, 2, 3),
+	(0, 1, 2),
+	(-1, 0, 2),
+], ids=lambda p: p)
+def triple(request):
+	return request.param
+
+
+class TestFrozenTwoPieceUniform:
+	def test_pdf(self):
+		min, p50, max = 0, 2, 3
+		dist = FrozenTwoPieceUniform(min, p50, max)
+
+		assert dist.pdf(0.5) == pytest.approx(1 / 2 * dist.pdf(2.5))
+
+		assert dist.pdf(min - 0.5) == 0
+		assert dist.pdf(max + 0.5) == 0
+
+	def test_cdf(self, triple):
+		min, p50, max = triple
+
+		dist = FrozenTwoPieceUniform(min, p50, max)
+
+		assert dist.cdf(min) == pytest.approx(0)
+		assert dist.cdf(p50) == pytest.approx(0.5)
+		assert dist.cdf(max) == pytest.approx(1)
+
+	def test_ppf(self, triple):
+		min, p50, max = triple
+		dist = FrozenTwoPieceUniform(min, p50, max)
+
+		assert dist.ppf(0) == pytest.approx(min)
+		assert is_arithmetic_sequence(dist.ppf([0, 0.1, 0.2, 0.3]))
+		assert dist.ppf(0.5) == pytest.approx(p50)
+		assert is_arithmetic_sequence(dist.ppf([0.5, 0.6, 0.7, 0.8]))
+		assert dist.ppf(1) == pytest.approx(max)
+
+	def test_rvs(self, triple, random_seed):
+		"""
+		Use the Kolmogorov-Smirnov statistic to check that samples drawn from the two-piece come from the same
+		distribution as two samples drawn from two appropriate uniform distributions.
+		"""
+
+		min, p50, max = triple
+		dist = FrozenTwoPieceUniform(min, p50, max)
+
+		n = 75_000
+		test_draws = dist.rvs(n)
+
+		left_draws = stats.uniform(loc=min, scale=(p50 - min)).rvs(n // 2)
+		right_draws = stats.uniform(loc=p50, scale=(max - p50)).rvs(n // 2)
+		expected_draws = np.concatenate((left_draws, right_draws))
+
+		statistic, p_value = stats.ks_2samp(data1=test_draws, data2=expected_draws)
+
+		tolerance = 1 / 100
+		assert statistic < tolerance
+
+
+@pytest.fixture(params=[0, 1.23])
+def certainty_value(request):
+	return request.param
+
+
+class TestCertainty:
+	def test_rvs(self, certainty_value):
+		dist = FrozenCertainty(certainty_value)
+		n = 10
+		assert np.all(dist.rvs(size=n) == certainty_value)
+
+	def test_cdf(self, certainty_value):
+		dist = FrozenCertainty(certainty_value)
+		assert dist.cdf(certainty_value - 1) == 0
+		assert dist.cdf(certainty_value + 1) == 1
+
+	def test_ppf(self, certainty_value):
+		dist = FrozenCertainty(certainty_value)
+		for p in [0.1, 0.123, 0.8]:
+			assert dist.ppf(p) == pytest.approx(certainty_value)
