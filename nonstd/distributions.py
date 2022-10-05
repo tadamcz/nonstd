@@ -54,8 +54,14 @@ class TwoPieceUniform(stats.rv_continuous):
 
 	This means the distribution can be defined by three numbers: its minimum, 50th percentile, and maximum.
 
-	# TODO: consider generalising to support an arbitrary middle quantile
+	Note that for performance reasons, we don't want to use frozen instances of the components (i.e. the objects
+	that would be created by calling e.g. ``stats.uniform(1,2)``). Freezing any distribution causes a large overhead in
+	SciPy. This is what leads to this non-object-oriented style where the components are never instantiated, and the arguments
+	``min``, ``p50``, ``max`` are instead passed around between methods.
+
+	TODO: consider generalising to support an arbitrary middle quantile
 	"""
+	normalization_constant = 2
 
 	def args(self, min, p50, max):
 		return min, p50, max
@@ -66,30 +72,39 @@ class TwoPieceUniform(stats.rv_continuous):
 
 		return True
 
-	def unnormalized_components(self, min, p50, max):
+	def loc_scale(self, min, p50, max):
 		"""
 		Note the slightly counter-intuitive usage: using SciPy's parameters ``loc`` and ``scale``, one obtains the
 		uniform distribution on ``[loc, loc + scale]``.
 		"""
-		left = stats.uniform(loc=min, scale=(p50 - min))
-		right = stats.uniform(loc=p50, scale=(max - p50))
+		return {
+			"left": {"loc": min, "scale": p50 - min},
+			"right": {"loc": p50, "scale": max - p50},
+		}
 
-		return left, right
+	def left_pdf(self, x, min, p50, max):
+		loc_scale = self.loc_scale(min, p50, max)["left"]
+		return stats.uniform.pdf(x, **loc_scale) / self.normalization_constant
+
+	def right_pdf(self, x, min, p50, max):
+		loc_scale = self.loc_scale(min, p50, max)["right"]
+		return stats.uniform.pdf(x, **loc_scale) / self.normalization_constant
+
+	def left_ppf(self, p, min, p50, max):
+		loc_scale = self.loc_scale(min, p50, max)["left"]
+		return stats.uniform.ppf(p, **loc_scale)
+
+	def right_ppf(self, p, min, p50, max):
+		loc_scale = self.loc_scale(min, p50, max)["right"]
+		return stats.uniform.ppf(p, **loc_scale)
 
 	def _pdf_single(self, x, min, p50, max):
-		unnormalized_left, unnormalized_right = self.unnormalized_components(min, p50, max)
-
-		normalization_constant = 2
-
-		left_pdf = lambda x: unnormalized_left.pdf(x) / normalization_constant
-		right_pdf = lambda x: unnormalized_right.pdf(x) / normalization_constant
-
 		if x < min:
 			return 0
 		elif x < p50:
-			return left_pdf(x)
+			return self.left_pdf(x, min, p50, max)
 		elif x < max:
-			return right_pdf(x)
+			return self.right_pdf(x, min, p50, max)
 		else:
 			return 0
 
@@ -97,8 +112,6 @@ class TwoPieceUniform(stats.rv_continuous):
 		return np.vectorize(self._pdf_single)(x, min, p50, max)
 
 	def _rvs(self, min, p50, max, size=None, random_state=None):
-		left, right = self.unnormalized_components(min, p50, max)
-
 		probabilities = stats.uniform.rvs(size=size)
 
 		draws = []
@@ -106,23 +119,21 @@ class TwoPieceUniform(stats.rv_continuous):
 		for p in probabilities:
 			if p < 0.5:
 				p_piece = p * 2
-				draw = left.ppf(p_piece)
+				draw = self.left_ppf(p_piece, min, p50, max)
 			else:
 				p_piece = (p - 0.5) * 2
-				draw = right.ppf(p_piece)
+				draw = self.right_ppf(p_piece, min, p50, max)
 			draws.append(draw)
 
 		return draws
 
 	def _ppf_single(self, q, min, p50, max):
-		left, right = self.unnormalized_components(min, p50, max)
-
 		if q < 0.5:
 			q_piece = q * 2
-			return left.ppf(q_piece)
+			return self.left_ppf(q_piece, min, p50, max)
 		else:
 			q_piece = (q - 0.5) * 2
-			return right.ppf(q_piece)
+			return self.right_ppf(q_piece, min, p50, max)
 
 	def _ppf(self, x, min, p50, max):
 		return np.vectorize(self._ppf_single)(x, min, p50, max)

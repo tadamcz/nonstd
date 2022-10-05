@@ -103,14 +103,7 @@ class TestFrozenTwoPieceUniform:
 		n = 75_000
 		test_draws = dist.rvs(n)
 
-		left_draws = stats.uniform(loc=min, scale=(p50 - min)).rvs(n // 2)
-		right_draws = stats.uniform(loc=p50, scale=(max - p50)).rvs(n // 2)
-		expected_draws = np.concatenate((left_draws, right_draws))
 
-		statistic, p_value = stats.ks_2samp(data1=test_draws, data2=expected_draws)
-
-		tolerance = 1 / 100
-		assert statistic < tolerance
 
 
 @pytest.fixture(params=[0, 1.23])
