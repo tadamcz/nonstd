@@ -96,7 +96,7 @@ class FlexibleSequenceDefinition(enum.Enum):
 
 
 class FlexibleSequence(collections.abc.Sequence):
-	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None, callabe_start_i:Optional[int]=0):
+	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None, callable_start_i:Optional[int]=0):
 		"""
 		Specify a sequence in one of three ways:
 
@@ -125,12 +125,12 @@ class FlexibleSequence(collections.abc.Sequence):
 			an infinite loop). If you specify a length, it will behave as if it were a sequence of that length (even
 			though the callable may support arguments greater than that length).
 
-		:param callabe_start_i: The callable argument that corresponds to the 0 index of the ``FlexibleSequence``.``flexible_seq[0]==callable(callable_start_i)``
+		:param callable_start_i: The callable argument that corresponds to the 0 index of the ``FlexibleSequence``.``flexible_seq[0]==callable(callable_start_i)``
 		"""
 		if isinstance(spec, Sequence) and length and len(spec) != length:
 			raise ValueError(f"Mismatched lengths: len(spec)={len(spec)}, length={length}")
 
-		self.c_start_i = callabe_start_i
+		self.c_start_i = callable_start_i
 		self.wrapped = spec
 
 		if isinstance(self.wrapped, Sequence):

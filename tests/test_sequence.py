@@ -231,12 +231,12 @@ class TestFlexibleSequence:
 
 	def test_callable_start(self):
 		f = lambda x: x ** 2
-		s = FlexibleSequence(f, callabe_start_i=1, length=4)
+		s = FlexibleSequence(f, callable_start_i=1, length=4)
 		assert s == [1, 4, 9, 16]
 
 		# The parameter is ignored
-		assert FlexibleSequence((1, 2), callabe_start_i=42) == FlexibleSequence((1, 2))
-		assert FlexibleSequence(1, callabe_start_i=42, length=100) == FlexibleSequence(1, length=100)
+		assert FlexibleSequence((1, 2), callable_start_i=42) == FlexibleSequence((1, 2))
+		assert FlexibleSequence(1, callable_start_i=42, length=100) == FlexibleSequence(1, length=100)
 
 	def test_iteration(self):
 		s = FlexibleSequence((1, 2, 3))
