@@ -45,7 +45,7 @@ class FlexibleSequenceType(enum.Enum):
 
 
 class FlexibleSequence(collections.abc.Sequence):
-	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None):
+	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None, callabe_start_i:Optional[int]=0):
 		"""
 		Specify a sequence in one of three ways:
 
@@ -57,8 +57,8 @@ class FlexibleSequence(collections.abc.Sequence):
 			provide a single object; the ``FlexibleSequence`` will behave like a sequence with that object at every index.
 
 		-
-			provide a callable (e.g. a function); the ``FlexibleSequence`` will behave such that ``flexible_seq[i] == callable(i)`` for
-			all ``i``.
+			provide a callable (e.g. a function); the ``FlexibleSequence`` will behave such that
+			``flexible_seq[i] == callable(callable_start_i+i)`` for all ``i``.
 
 
 		Note: The type annotation ``Union[object, Sequence, Callable]`` doesn't do anything in a type checker, because
@@ -73,10 +73,13 @@ class FlexibleSequence(collections.abc.Sequence):
 			will behave like an infinite sequence (so that e.g. the line `[i for i in flex_seq]` will lead to
 			an infinite loop). If you specify a length, it will behave as if it were a sequence of that length (even
 			though the callable may support arguments greater than that length).
+
+		:param callabe_start_i: The callable argument that corresponds to the 0 index of the ``FlexibleSequence``.``flexible_seq[0]==callable(callable_start_i)``
 		"""
 		if isinstance(spec, Sequence) and length and len(spec) != length:
 			raise ValueError(f"Mismatched lengths: len(spec)={len(spec)}, length={length}")
 
+		self.c_start_i = callabe_start_i
 		self.wrapped = spec
 
 		if isinstance(self.wrapped, Sequence):
@@ -134,7 +137,7 @@ class FlexibleSequence(collections.abc.Sequence):
 		elif self.type == FlexibleSequenceType.CALLABLE:
 			if index < 0:
 				raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
-			return self.wrapped(index)
+			return self.wrapped(self.c_start_i + index)
 
 	def get_slice(self, slice):
 		if isinstance(self.wrapped, (Number, Callable)):
