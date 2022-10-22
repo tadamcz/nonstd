@@ -74,8 +74,8 @@ class FlexibleSequence(collections.abc.Sequence):
 			an infinite loop). If you specify a length, it will behave as if it were a sequence of that length (even
 			though the callable may support arguments greater than that length).
 		"""
-		if isinstance(spec, Sequence) and length is not None:
-			raise ValueError("Do not specify `length` when supplying a Sequence")
+		if isinstance(spec, Sequence) and length and len(spec) != length:
+			raise ValueError(f"Mismatched lengths: len(spec)={len(spec)}, length={length}")
 
 		self.wrapped = spec
 
