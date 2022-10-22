@@ -4,7 +4,7 @@ from scipy import stats
 
 from nonstd.distributions import lognormal, is_frozen_normal, is_frozen_lognormal, is_frozen_beta, \
 	FrozenTwoPieceUniform, FrozenCertainty
-from nonstd.sequences import is_arithmetic_sequence
+from nonstd.sequence_math import is_arithmetic_sequence
 
 
 @pytest.fixture(params=[-1, 0, 3], ids=lambda p: f"mu={p}")
