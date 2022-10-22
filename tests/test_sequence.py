@@ -182,7 +182,7 @@ class TestOneIndexedList:
 
 	def test_keys(self):
 		oil = OneIndexedList((1, 5))
-		assert oil.keys() == [1, 2]
+		assert oil.keys() == oil.indices() == [1, 2]
 
 
 @pytest.fixture(params=[FlexibleSequenceDefinition.DIRECT, FlexibleSequenceDefinition.CALLABLE])

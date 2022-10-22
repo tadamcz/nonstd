@@ -84,6 +84,10 @@ class OneIndexedList(collections.UserList):
 	def keys(self):
 		return list(range(1, len(self.data) + 1))
 
+	def indices(self):
+		"""Alias"""
+		return self.keys()
+
 	def items(self):
 		"""
 		Behaves similarly to calling ``enumerate()`` on a regular ``list``.
