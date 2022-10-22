@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 
-from nonstd.sequence import OneIndexedList, FlexibleSequenceType, FlexibleSequence
+from nonstd.sequence import OneIndexedList, FlexibleSequenceDefinition, FlexibleSequence
 
 
 class TestOneIndexedList:
@@ -185,38 +185,38 @@ class TestOneIndexedList:
 		assert oil.keys() == [1, 2]
 
 
-@pytest.fixture(params=[FlexibleSequenceType.DIRECT, FlexibleSequenceType.CALLABLE])
+@pytest.fixture(params=[FlexibleSequenceDefinition.DIRECT, FlexibleSequenceDefinition.CALLABLE])
 def one_two_three(request):
-	if request.param == FlexibleSequenceType.DIRECT:
+	if request.param == FlexibleSequenceDefinition.DIRECT:
 		return FlexibleSequence((1, 2, 3))
-	if request.param == FlexibleSequenceType.CALLABLE:
+	if request.param == FlexibleSequenceDefinition.CALLABLE:
 		return FlexibleSequence(lambda index: index + 1)
 
 
 class TestFlexibleSequence:
 	def test_init(self):
 		s = FlexibleSequence(1)
-		assert s.type == FlexibleSequenceType.CONSTANT
+		assert s.definition == FlexibleSequenceDefinition.CONSTANT
 
 		s = FlexibleSequence(dict(hello="world"))
-		assert s.type == FlexibleSequenceType.CONSTANT
+		assert s.definition == FlexibleSequenceDefinition.CONSTANT
 
 		# Unclear if this is the ideal behaviour, but it's a defensible choice, and I'll go with it
 		s = FlexibleSequence(OrderedDict(hello="world"))
-		assert s.type == FlexibleSequenceType.CONSTANT
+		assert s.definition == FlexibleSequenceDefinition.CONSTANT
 
 		f = lambda x: x ** 2
 		s = FlexibleSequence(f)
-		assert s.type == FlexibleSequenceType.CALLABLE
+		assert s.definition == FlexibleSequenceDefinition.CALLABLE
 
 		s = FlexibleSequence((1, 2, 3))
-		assert s.type == FlexibleSequenceType.DIRECT
+		assert s.definition == FlexibleSequenceDefinition.DIRECT
 
 		s = FlexibleSequence([1, 2, 3])
-		assert s.type == FlexibleSequenceType.DIRECT
+		assert s.definition == FlexibleSequenceDefinition.DIRECT
 
 		s = FlexibleSequence(OneIndexedList([1, 2, 3]))
-		assert s.type == FlexibleSequenceType.DIRECT
+		assert s.definition == FlexibleSequenceDefinition.DIRECT
 
 	def test_length(self):
 		s = FlexibleSequence(1, length=3)
@@ -277,7 +277,7 @@ class TestFlexibleSequence:
 		assert s[:1] == [1]
 		assert s[:3] == [1, 2, 3]
 
-		if s.type != FlexibleSequenceType.CALLABLE:
+		if s.definition != FlexibleSequenceDefinition.CALLABLE:
 			assert s[0:] == [1, 2, 3]
 			assert s[1:] == [2, 3]
 			assert s[3:] == []

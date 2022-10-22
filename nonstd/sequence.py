@@ -89,7 +89,7 @@ class OneIndexedList(collections.UserList):
 		return [(key, self[key]) for key in self.keys()]
 
 
-class FlexibleSequenceType(enum.Enum):
+class FlexibleSequenceDefinition(enum.Enum):
 	DIRECT = enum.auto()
 	CONSTANT = enum.auto()
 	CALLABLE = enum.auto()
@@ -134,12 +134,12 @@ class FlexibleSequence(collections.abc.Sequence):
 		self.wrapped = spec
 
 		if isinstance(self.wrapped, Sequence):
-			self.type = FlexibleSequenceType.DIRECT
+			self.definition = FlexibleSequenceDefinition.DIRECT
 			length = len(self.wrapped)
 		elif isinstance(self.wrapped, Callable):
-			self.type = FlexibleSequenceType.CALLABLE
+			self.definition = FlexibleSequenceDefinition.CALLABLE
 		else:  # any other object
-			self.type = FlexibleSequenceType.CONSTANT
+			self.definition = FlexibleSequenceDefinition.CONSTANT
 
 		if length is None:
 			self.length = inf
@@ -147,7 +147,7 @@ class FlexibleSequence(collections.abc.Sequence):
 			self.length = length
 
 	def __iter__(self):
-		if self.type == FlexibleSequenceType.DIRECT:
+		if self.definition == FlexibleSequenceDefinition.DIRECT:
 			yield from self.wrapped.__iter__()
 		else:
 			if math.isfinite(self.length):
@@ -156,7 +156,7 @@ class FlexibleSequence(collections.abc.Sequence):
 				yield from (self[i] for i in count())
 
 	def __len__(self):
-		if self.type == FlexibleSequenceType.DIRECT:
+		if self.definition == FlexibleSequenceDefinition.DIRECT:
 			return len(self.wrapped)
 		else:
 			if math.isfinite(self.length):
@@ -181,11 +181,11 @@ class FlexibleSequence(collections.abc.Sequence):
 			return f"FlexibleSequence({self.wrapped})"
 
 	def get_int(self, index):
-		if self.type == FlexibleSequenceType.CONSTANT:
+		if self.definition == FlexibleSequenceDefinition.CONSTANT:
 			return self.wrapped
-		elif self.type == FlexibleSequenceType.DIRECT:
+		elif self.definition == FlexibleSequenceDefinition.DIRECT:
 			return self.wrapped[index]
-		elif self.type == FlexibleSequenceType.CALLABLE:
+		elif self.definition == FlexibleSequenceDefinition.CALLABLE:
 			if index < 0:
 				raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
 			return self.wrapped(self.c_start_i + index)
@@ -200,11 +200,11 @@ class FlexibleSequence(collections.abc.Sequence):
 			else:
 				slice_len = self._slice_len(slice, self.length)
 
-		if self.type == FlexibleSequenceType.CONSTANT:
+		if self.definition == FlexibleSequenceDefinition.CONSTANT:
 			return FlexibleSequence([self.wrapped] * slice_len)
-		elif self.type == FlexibleSequenceType.DIRECT:
+		elif self.definition == FlexibleSequenceDefinition.DIRECT:
 			return FlexibleSequence(self.wrapped[slice])
-		elif self.type == FlexibleSequenceType.CALLABLE:
+		elif self.definition == FlexibleSequenceDefinition.CALLABLE:
 			if slice.stop is None:
 				end_range = self.length
 			else:
