@@ -154,7 +154,7 @@ class TestOneIndexedList:
 		assert OneIndexedList() == OneIndexedList()
 		assert OneIndexedList([1, 2]) == OneIndexedList([1, 2])
 		assert not OneIndexedList([]) == OneIndexedList([1])
-
+		assert not OneIndexedList([1, 2]) == None
 		with pytest.raises(NotImplementedError):
 			OneIndexedList([1]) == [1]
 
@@ -311,3 +311,5 @@ class TestFlexibleSequence:
 		assert FlexibleSequence(lambda x: x ** 2, length=5) == \
 			   FlexibleSequence([0, 1, 4, 9, 16]) == \
 			   [0, 1, 4, 9, 16]
+
+		assert FlexibleSequence((1,2,3)) != None

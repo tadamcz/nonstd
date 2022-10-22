@@ -71,6 +71,8 @@ class OneIndexedList(collections.UserList):
 		return wrapped_result + 1
 
 	def __eq__(self, other) -> bool:
+		if other is None:
+			return False
 		if not isinstance(other, OneIndexedList):
 			# This is a judgement call. One could also follow ``UserList``, which allows comparisons to a simple ``list``.
 			raise NotImplementedError(f"Cannot compare a `OneIndexedList` to a {other.__class__.__name__}")
@@ -172,6 +174,8 @@ class FlexibleSequence(collections.abc.Sequence):
 			return self.get_int(index)
 
 	def __eq__(self, other) -> bool:
+		if other is None:
+			return False
 		return [i for i in self] == [i for i in other]
 
 	def __repr__(self):
