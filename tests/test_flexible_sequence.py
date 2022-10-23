@@ -117,13 +117,16 @@ class TestFlexibleSequence:
 	def test_access_slice_infinite(self, start, stop, step):
 		one = FlexibleSequence(1)
 
+		# A bit of a hack: If the slice's size depends on the size of the list being sliced, then we should expect
+		# an IndexError when attempting to slice an infinite `FlexibleSequence`.
 		size_dependent_slice = len(list(range(100))[start:stop:step]) < len(list(range(1000))[start:stop:step])
 
 		if size_dependent_slice:
 			with pytest.raises(IndexError):
 				one[start:stop:step]
 		else:
-			length = len(list(range(100))[start:stop:step])
+			LARGE_NUMBER = 1000
+			length = len(list(range(LARGE_NUMBER))[start:stop:step])
 			assert one[start:stop:step] == [1] * length
 
 	def test_equality(self):
