@@ -71,8 +71,8 @@ class TestFlexibleSequence:
 
 	def test_callable_start(self):
 		f = lambda x: x ** 2
-		s = FlexibleSequence(f, callable_start_i=1, length=4)
-		assert s == [1, 4, 9, 16]
+		assert FlexibleSequence(f, callable_start_i=5, length=4) == [25, 36, 49, 64]
+		assert FlexibleSequence(f, length=4) == [0, 1, 4, 9]
 
 		# The parameter is ignored
 		assert FlexibleSequence((1, 2), callable_start_i=42) == FlexibleSequence((1, 2))
