@@ -132,3 +132,6 @@ class TestFlexibleSequence:
 			   [0, 1, 4, 9, 16]
 
 		assert FlexibleSequence((1, 2, 3)) != None
+
+	def test_idempotency(self):
+		assert FlexibleSequence([1,2,3]) == FlexibleSequence(FlexibleSequence([1,2,3]))

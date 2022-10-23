@@ -181,3 +181,6 @@ class TestOneIndexedList:
 	def test_keys(self):
 		oil = OneIndexedList((1, 5))
 		assert oil.keys() == oil.indices() == [1, 2]
+
+	def test_idempotency(self):
+		assert OneIndexedList([1,2,3]) == OneIndexedList(OneIndexedList([1,2,3]))
