@@ -115,8 +115,9 @@ class FlexibleSequence(collections.abc.Sequence):
 
 		-
 			provide a callable (e.g. a function); the ``FlexibleSequence`` will behave such that
-			``flexible_seq[i] == callable(callable_start_i+i)`` for all ``i``.
+			``flexible_seq[i] == callable(callable_start_i+i)`` for positive indices ``i``.
 
+		Negative indices will behave as you'd expect, or raise an exception in impossible cases.
 
 		Note: The type annotation ``Union[object, Sequence, Callable]`` doesn't do anything in a type checker, because
 		everything is an ``object``. It only suggests the intent.
@@ -263,9 +264,10 @@ class FlexibleSequence(collections.abc.Sequence):
 			pass
 
 	def _raise_infinite_result(self, _slice):
+		"""A possible improvement would be to return a generator"""
 		raise IndexError(
 			f"The result of slicing an infinite `FlexibleSequence` with [{_slice.start}:{_slice.stop}:{_slice.step}] would be infinite.")
 
 	def _raise_negative_forbidden(self, index):
 		raise NotImplementedError(
-			f"When supplying a callable without a `length`, the negative index {index} would lead to unexpected behaviour.")
+			f"When supplying a callable without a `length`, the negative index {index} would lead to undefined behaviour.")
