@@ -98,24 +98,25 @@ class TestFlexibleSequence:
 		assert s[-1] == 5
 
 		f = lambda x: x ** 2
-		s = FlexibleSequence(f)
-		assert s[4] == 16
+		infinite = FlexibleSequence(f)
+		assert infinite[4] == 16
 		with pytest.raises(NotImplementedError):
-			s[-2]
+			infinite[-2]
 		with pytest.raises(NotImplementedError):
-			s[-2:-1]
+			infinite[-2:-1]
+
+		finite = FlexibleSequence(f, length=5)
+		assert finite[-1] == 16
+		assert finite[-3:] == [4, 9, 16]
 
 	def test_access_slice_finite(self, one_two_three, one_with_length, start, stop, step):
-		try:
-			assert one_two_three[start:stop:step] == [1, 2, 3][start:stop:step]
+		assert one_two_three[start:stop:step] == [1, 2, 3][start:stop:step]
 
-			# Does not raise IndexError
-			one_with_length[start:stop:step]
-		except NotImplementedError:
-			pass
+		# Does not raise IndexError
+		one_with_length[start:stop:step]
 
 	def test_access_slice_infinite(self, start, stop, step):
-		one = FlexibleSequence(1)
+		one = FlexibleSequence(1)  # without a length
 
 		# A bit of a hack: If the slice's size depends on the size of the list being sliced, then we should expect
 		# an IndexError when attempting to slice an infinite `FlexibleSequence`.

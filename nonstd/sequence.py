@@ -198,16 +198,19 @@ class FlexibleSequence(collections.abc.Sequence):
 			return self.wrapped[index]
 		elif self.definition == FlexibleSequenceDefinition.CALLABLE:
 			if index < 0:
-				raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
+				if math.isinf(self.length):
+					self._raise_negative_forbidden(index)
+				else:
+					index = self.length + index
 			return self.wrapped(self.c_start_i + index)
 
 	def _get_slice(self, _slice: slice):
-		if isinstance(self.wrapped, Callable):
+		if isinstance(self.wrapped, Callable) and math.isinf(self.length):
 			try:
 				if _slice.start < 0:
-					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
+					self._raise_negative_forbidden(_slice.start)
 				if _slice.stop < 0:
-					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
+					self._raise_negative_forbidden(_slice.stop)
 			except TypeError:  # if start or stop are `None`
 				pass
 
@@ -258,3 +261,7 @@ class FlexibleSequence(collections.abc.Sequence):
 						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
 		except TypeError:
 			pass
+
+	def _raise_negative_forbidden(self, index):
+		raise NotImplementedError(
+			f"When supplying a callable without a `length`, the negative index {index} would lead to unexpected behaviour.")
