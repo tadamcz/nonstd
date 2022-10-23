@@ -18,17 +18,17 @@ def one_with_length():
 	return FlexibleSequence(1, length=5)
 
 
-@pytest.fixture(params=list(range(-4, 4)) + [None], ids=lambda x: f"start=___{x}___")
+@pytest.fixture(params=list(range(-4, 4)) + [None], ids=lambda x: f"start={x}")
 def start(request):
 	return request.param
 
 
-@pytest.fixture(params=list(range(-4, 4)) + [None], ids=lambda x: f"stop=___{x}___")
+@pytest.fixture(params=list(range(-4, 4)) + [None], ids=lambda x: f"stop={x}")
 def stop(request):
 	return request.param
 
 
-@pytest.fixture(params=list(range(-4, 0)) + list(range(1, 4)) + [None], ids=lambda x: f"step=___{x}___")
+@pytest.fixture(params=list(range(-4, 0)) + list(range(1, 4)) + [None], ids=lambda x: f"step={x}")
 def step(request):
 	return request.param
 
