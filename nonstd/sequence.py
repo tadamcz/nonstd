@@ -217,7 +217,7 @@ class FlexibleSequence(collections.abc.Sequence):
 		if math.isfinite(self.length):
 			int_indices = range(*_slice.indices(self.length))
 		else:
-			self._validate_slice_infinite(_slice)
+			self._validate_finite_result(_slice)
 			max_length = 1
 
 			# A tighter bound is surely possible, but is not necessary and this is easier to reason about
@@ -237,30 +237,34 @@ class FlexibleSequence(collections.abc.Sequence):
 		elif self.definition == FlexibleSequenceDefinition.CALLABLE:
 			return FlexibleSequence([self._get_int(i) for i in int_indices])
 
-	def _validate_slice_infinite(self, _slice: slice):
+	def _validate_finite_result(self, _slice: slice):
 		step = _slice.step if _slice.step is not None else 1
 
 		try:
 			if _slice.start is None and _slice.stop is None:
-				raise IndexError
+				self._raise_infinite_result(_slice)
 
 			if step > 0:
 				if _slice.stop is None:
 					if _slice.start >= 0:
-						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
+						self._raise_infinite_result(_slice)
 				if (_slice.start is None) or (_slice.start >= 0):
 					if _slice.stop < 0:
-						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
+						self._raise_infinite_result(_slice)
 
 			if step < 0:
 				if _slice.start is None:
 					if _slice.stop >= 0:
-						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
+						self._raise_infinite_result(_slice)
 				if _slice.start < 0:
 					if (_slice.stop is None) or (_slice.stop >= 0):
-						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
+						self._raise_infinite_result(_slice)
 		except TypeError:
 			pass
+
+	def _raise_infinite_result(self, _slice):
+		raise IndexError(
+			f"The result of slicing an infinite `FlexibleSequence` with [{_slice.start}:{_slice.stop}:{_slice.step}] would be infinite.")
 
 	def _raise_negative_forbidden(self, index):
 		raise NotImplementedError(
