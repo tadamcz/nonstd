@@ -190,7 +190,27 @@ def one_two_three(request):
 	if request.param == FlexibleSequenceDefinition.DIRECT:
 		return FlexibleSequence((1, 2, 3))
 	if request.param == FlexibleSequenceDefinition.CALLABLE:
-		return FlexibleSequence(lambda index: index + 1)
+		return FlexibleSequence(lambda index: index + 1, length=3)
+
+
+@pytest.fixture()
+def one_with_length():
+	return FlexibleSequence(1, length=5)
+
+
+@pytest.fixture(params=list(range(-4, 4)) + [None], ids=lambda x: f"start=___{x}___")
+def start(request):
+	return request.param
+
+
+@pytest.fixture(params=list(range(-4, 4)) + [None], ids=lambda x: f"stop=___{x}___")
+def stop(request):
+	return request.param
+
+
+@pytest.fixture(params=list(range(-4, 0)) + list(range(1, 4)) + [None], ids=lambda x: f"step=___{x}___")
+def step(request):
+	return request.param
 
 
 class TestFlexibleSequence:
@@ -261,55 +281,31 @@ class TestFlexibleSequence:
 		s = FlexibleSequence(f)
 		assert s[4] == 16
 		with pytest.raises(NotImplementedError):
-			s[-1]
+			s[-2]
+		with pytest.raises(NotImplementedError):
+			s[-2:-1]
 
-	def test_access_slice(self, one_two_three):
-		"""
-		``one_two_three`` is equal to [1,2,3] and parametrized as (1) coming from a sequence, or (2) coming from a
-		callable
-		"""
-		s = one_two_three
+	def test_access_slice_finite(self, one_two_three, one_with_length, start, stop, step):
+		assert one_two_three[start:stop:step] == [1, 2, 3][start:stop:step]
 
-		assert s[0:2] == [1, 2]
-		assert s[1:3] == [2, 3]
+		# Does not raise
+		one_with_length[start:stop:step]
 
-		assert s[:0] == []
-		assert s[:1] == [1]
-		assert s[:3] == [1, 2, 3]
+	def test_access_slice_infinite(self, start, stop, step):
+		one = FlexibleSequence(1)
 
-		if s.definition != FlexibleSequenceDefinition.CALLABLE:
-			assert s[0:] == [1, 2, 3]
-			assert s[1:] == [2, 3]
-			assert s[3:] == []
+		size_dependent_slice = len(list(range(100))[start:stop:step]) < len(list(range(1000))[start:stop:step])
 
-		assert s[:3:2] == [1, 3]
-		assert s[0:3:2] == [1, 3]
-
-		assert s[:3:2] == [1, 3]
-		assert s[0:3:2] == [1, 3]
-
-	def test_access_slice_raises(self):
-		s_callable = FlexibleSequence(lambda x: x + 1)
-		s_callable_length = FlexibleSequence(lambda x: x + 1, length=3)
-
-		# All these should raise an exception, iff no length is provided
-		slices = [
-			slice(None, None, -1),  # corresponds to seq[::1]
-			slice(0, None, None),   # corresponds to seq[0:]
-			slice(None, None, -1),  # corresponds to seq[::-1]
-		]
-
-		for sl in slices:
-			s_callable_length[sl]  # does not raise
-			with pytest.raises(IndexError, match="You must provide a slice stop"):
-				s_callable[sl]
-
-		assert s_callable_length[::-1] == [3, 2, 1]
-		assert s_callable_length[0:] == [1, 2, 3]
+		if size_dependent_slice:
+			with pytest.raises(IndexError):
+				one[start:stop:step]
+		else:
+			length = len(list(range(100))[start:stop:step])
+			assert one[start:stop:step] == [1] * length
 
 	def test_equality(self):
 		assert FlexibleSequence(lambda x: x ** 2, length=5) == \
 			   FlexibleSequence([0, 1, 4, 9, 16]) == \
 			   [0, 1, 4, 9, 16]
 
-		assert FlexibleSequence((1,2,3)) != None
+		assert FlexibleSequence((1, 2, 3)) != None

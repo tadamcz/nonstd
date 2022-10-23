@@ -100,6 +100,11 @@ class FlexibleSequenceDefinition(enum.Enum):
 	CONSTANT = enum.auto()
 	CALLABLE = enum.auto()
 
+def same_sign(a, b):
+	return (a*b)>0
+
+def opposite_sign(a, b):
+	return (a*b)<0
 
 class FlexibleSequence(collections.abc.Sequence):
 	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None, callable_start_i:Optional[int]=0):
@@ -148,7 +153,10 @@ class FlexibleSequence(collections.abc.Sequence):
 			self.definition = FlexibleSequenceDefinition.CONSTANT
 
 		if length is None:
-			self.length = inf
+			if self.definition == FlexibleSequenceDefinition.DIRECT:
+				self.length = len(self.wrapped)
+			else:
+				self.length = inf
 		else:
 			self.length = length
 
@@ -173,9 +181,9 @@ class FlexibleSequence(collections.abc.Sequence):
 
 	def __getitem__(self, index):
 		if isinstance(index, slice):
-			return self.get_slice(index)
+			return self._get_slice(index)
 		if isinstance(index, int):
-			return self.get_int(index)
+			return self._get_int(index)
 
 	def __eq__(self, other) -> bool:
 		if other is None:
@@ -188,7 +196,7 @@ class FlexibleSequence(collections.abc.Sequence):
 		else:
 			return f"FlexibleSequence({self.wrapped})"
 
-	def get_int(self, index):
+	def _get_int(self, index: int):
 		if self.definition == FlexibleSequenceDefinition.CONSTANT:
 			return self.wrapped
 		elif self.definition == FlexibleSequenceDefinition.DIRECT:
@@ -198,46 +206,57 @@ class FlexibleSequence(collections.abc.Sequence):
 				raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
 			return self.wrapped(self.c_start_i + index)
 
-	def get_slice(self, slice):
-		if isinstance(self.wrapped, (Number, Callable)):
-			if slice.stop is None and math.isinf(self.length):
-				raise IndexError(
-					f"You must provide a slice stop when the `SequenceSpecifier` is infinite.")
-			if self.length is None:
-				slice_len = self._slice_len(slice, inf)
-			else:
-				slice_len = self._slice_len(slice, self.length)
+	def _get_slice(self, _slice: slice):
+		if math.isfinite(self.length):
+			int_indices = range(*_slice.indices(self.length))
+		else:
+			self._validate_slice_infinite(_slice)
+			max_length = 1
+
+			# A tighter bound is surely possible, but is not necessary and this is easier to reason about
+			if _slice.start is not None:
+				max_length += abs(_slice.start)
+			if _slice.stop is not None:
+				max_length += abs(_slice.stop)
+
+			int_indices = range(*_slice.indices(max_length))
+
+		slice_length = len(int_indices)
 
 		if self.definition == FlexibleSequenceDefinition.CONSTANT:
-			return FlexibleSequence([self.wrapped] * slice_len)
+			return FlexibleSequence([self.wrapped] * slice_length)
 		elif self.definition == FlexibleSequenceDefinition.DIRECT:
-			return FlexibleSequence(self.wrapped[slice])
+			return FlexibleSequence(self.wrapped[_slice])
 		elif self.definition == FlexibleSequenceDefinition.CALLABLE:
-			if slice.stop is None:
-				end_range = self.length
-			else:
-				end_range = min(self.length, slice.stop)
+			return FlexibleSequence([self._get_int(i) for i in int_indices])
 
-			indices = range(end_range)[slice]
-			return FlexibleSequence([self.get_int(i) for i in indices])
+	def _validate_slice_infinite(self, _slice: slice):
+		step = _slice.step if _slice.step is not None else 1
 
-	def _max_slice_len(self, s: slice):
-		"""https://stackoverflow.com/a/65500526/8010877"""
-		assert s.stop or s.stop == 0, "Must define stop for max slice len!"
-		assert s.step != 0, "Step slice cannot be zero"
+		try:
+			if isinstance(self.wrapped, Callable):
+				if _slice.start < 0:
+					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
+				if _slice.stop < 0:
+					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
 
-		start = s.start or 0
-		stop = s.stop
-		step = s.step or 1
+			if _slice.start is None and _slice.stop is None:
+				raise IndexError
 
-		delta = (stop - start)
-		dsteps = int(ceil(delta / step))
+			if step > 0:
+				if _slice.stop is None:
+					if _slice.start >= 0:
+						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
+				if (_slice.start is None) or (_slice.start >= 0):
+					if _slice.stop < 0:
+						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
 
-		return dsteps if dsteps >= 0 else 0
-
-	def _slice_len(self, s: slice, src_len: int):
-		"""https://stackoverflow.com/a/65500526/8010877"""
-		if (s.start is None or s.start == 0) and s.stop is None:
-			return self.length
-		stop = min(s.stop, src_len)
-		return self._max_slice_len(slice(s.start, stop, s.step))
+			if step < 0:
+				if _slice.start is None:
+					if _slice.stop >= 0:
+						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
+				if _slice.start < 0:
+					if (_slice.stop is None) or (_slice.stop >= 0):
+						raise IndexError("Invalid slice for infinite `FlexibleSequence`.")
+		except TypeError:
+			pass
