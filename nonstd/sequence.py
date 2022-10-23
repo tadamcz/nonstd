@@ -2,8 +2,7 @@ import collections.abc
 import enum
 import math
 from itertools import count
-from math import inf, ceil
-from numbers import Number
+from math import inf
 from typing import Optional, Union, Sequence, Callable
 
 
@@ -100,14 +99,10 @@ class FlexibleSequenceDefinition(enum.Enum):
 	CONSTANT = enum.auto()
 	CALLABLE = enum.auto()
 
-def same_sign(a, b):
-	return (a*b)>0
-
-def opposite_sign(a, b):
-	return (a*b)<0
 
 class FlexibleSequence(collections.abc.Sequence):
-	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None, callable_start_i:Optional[int]=0):
+	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None,
+				 callable_start_i: Optional[int] = 0):
 		"""
 		Specify a sequence in one of three ways:
 
@@ -207,6 +202,15 @@ class FlexibleSequence(collections.abc.Sequence):
 			return self.wrapped(self.c_start_i + index)
 
 	def _get_slice(self, _slice: slice):
+		if isinstance(self.wrapped, Callable):
+			try:
+				if _slice.start < 0:
+					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
+				if _slice.stop < 0:
+					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
+			except TypeError:  # if start or stop are `None`
+				pass
+
 		if math.isfinite(self.length):
 			int_indices = range(*_slice.indices(self.length))
 		else:
@@ -234,12 +238,6 @@ class FlexibleSequence(collections.abc.Sequence):
 		step = _slice.step if _slice.step is not None else 1
 
 		try:
-			if isinstance(self.wrapped, Callable):
-				if _slice.start < 0:
-					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
-				if _slice.stop < 0:
-					raise NotImplementedError("Negative indices with callables would lead to unexpected behaviour.")
-
 			if _slice.start is None and _slice.stop is None:
 				raise IndexError
 
