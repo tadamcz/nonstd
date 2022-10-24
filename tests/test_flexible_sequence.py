@@ -83,10 +83,17 @@ class TestFlexibleSequence:
 		assert [i for i in s] == [1, 2, 3]
 
 		s = FlexibleSequence(1, length=3)
+		# If we had not provided a `length`, the next line would lead to an infinite loop
 		assert [i for i in s] == [1, 1, 1]
 
 		s = FlexibleSequence(1)
 		assert [s[i] for i in range(1000)] == [1] * 1000
+
+		s = FlexibleSequence(lambda x: x)
+		# This is allowed, but would lead to an infinite loop without a `break` clause
+		for i in s:
+			if i > 100:
+				break
 
 	def test_access_integer(self):
 		s = FlexibleSequence((1, 2, 3))

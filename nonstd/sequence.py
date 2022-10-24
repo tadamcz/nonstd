@@ -1,4 +1,5 @@
 import collections.abc
+import contextlib
 import enum
 import math
 from itertools import count
@@ -207,18 +208,16 @@ class FlexibleSequence(collections.abc.Sequence):
 
 	def _get_slice(self, _slice: slice):
 		if isinstance(self.wrapped, Callable) and math.isinf(self.length):
-			try:
+			with CatchNoneComparisons():
 				if _slice.start < 0:
 					self._raise_negative_forbidden(_slice.start)
 				if _slice.stop < 0:
 					self._raise_negative_forbidden(_slice.stop)
-			except TypeError:  # if start or stop are `None`
-				pass
 
 		if math.isfinite(self.length):
 			int_indices = range(*_slice.indices(self.length))
 		else:
-			self._validate_finite_result(_slice)
+			self._raise_if_infinite_result(_slice)
 			max_length = 1
 
 			# A tighter bound is surely possible, but is not necessary and this is easier to reason about
@@ -229,45 +228,55 @@ class FlexibleSequence(collections.abc.Sequence):
 
 			int_indices = range(*_slice.indices(max_length))
 
-		slice_length = len(int_indices)
-
 		if self.definition == FlexibleSequenceDefinition.CONSTANT:
+			slice_length = len(int_indices)
 			return FlexibleSequence([self.wrapped] * slice_length)
 		elif self.definition == FlexibleSequenceDefinition.DIRECT:
 			return FlexibleSequence(self.wrapped[_slice])
 		elif self.definition == FlexibleSequenceDefinition.CALLABLE:
 			return FlexibleSequence([self._get_int(i) for i in int_indices])
 
-	def _validate_finite_result(self, _slice: slice):
-		step = _slice.step if _slice.step is not None else 1
+	def _raise_if_infinite_result(self, _slice: slice):
+		"""
+		A possible improvement would be to return an infinite generator. That's quite complex though.
 
-		try:
+		It may be possible to simplify the logic here, I used a brute force approach of hacking around until all tests
+		passed...
+		"""
+		step = _slice.step if _slice.step is not None else 1
+		exception = IndexError(
+			f"The result of slicing an infinite `FlexibleSequence` with [{_slice.start}:{_slice.stop}:{_slice.step}] would be infinite.")
+
+		with CatchNoneComparisons():
 			if _slice.start is None and _slice.stop is None:
-				self._raise_infinite_result(_slice)
+				raise exception
 
 			if step > 0:
 				if _slice.stop is None:
 					if _slice.start >= 0:
-						self._raise_infinite_result(_slice)
+						raise exception
 				if (_slice.start is None) or (_slice.start >= 0):
 					if _slice.stop < 0:
-						self._raise_infinite_result(_slice)
+						raise exception
 
 			if step < 0:
 				if _slice.start is None:
 					if _slice.stop >= 0:
-						self._raise_infinite_result(_slice)
+						raise exception
 				if _slice.start < 0:
 					if (_slice.stop is None) or (_slice.stop >= 0):
-						self._raise_infinite_result(_slice)
-		except TypeError:
-			pass
-
-	def _raise_infinite_result(self, _slice):
-		"""A possible improvement would be to return a generator"""
-		raise IndexError(
-			f"The result of slicing an infinite `FlexibleSequence` with [{_slice.start}:{_slice.stop}:{_slice.step}] would be infinite.")
+						raise exception
 
 	def _raise_negative_forbidden(self, index):
 		raise NotImplementedError(
 			f"When supplying a callable without a `length`, the negative index {index} would lead to undefined behaviour.")
+
+
+class CatchNoneComparisons(contextlib.AbstractContextManager):
+	"""
+	Silently ignore comparisons to ``None`` that would raise a TypeError
+	"""
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		if exc_type == TypeError and "not supported between instances of 'NoneType'" in str(exc_value):
+			return True
