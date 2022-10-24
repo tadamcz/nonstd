@@ -145,4 +145,10 @@ class TestFlexibleSequence:
 		assert FlexibleSequence((1, 2, 3)) != None
 
 	def test_idempotency(self):
-		assert FlexibleSequence([1,2,3]) == FlexibleSequence(FlexibleSequence([1,2,3]))
+		assert FlexibleSequence([1, 2, 3]) == FlexibleSequence(FlexibleSequence([1, 2, 3]))
+
+	def test_repr(self):
+		assert str(FlexibleSequence(1)) == "FlexibleSequence(1)"
+		assert str(FlexibleSequence(lambda x: x, length=3)) == "[0, 1, 2]"
+		assert str(FlexibleSequence(lambda x: x)) == "FlexibleSequence(function)"
+		assert str(FlexibleSequence(None)) == "FlexibleSequence(None)"

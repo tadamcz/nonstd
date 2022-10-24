@@ -4,6 +4,7 @@ import enum
 import math
 from itertools import count
 from math import inf
+from types import FunctionType
 from typing import Optional, Union, Sequence, Callable
 
 
@@ -191,6 +192,8 @@ class FlexibleSequence(collections.abc.Sequence):
 		if math.isfinite(self.length):
 			return [i for i in self].__repr__()
 		else:
+			if isinstance(self.wrapped, FunctionType):
+				return f"FlexibleSequence({self.wrapped.__class__.__name__})"
 			return f"FlexibleSequence({self.wrapped})"
 
 	def _get_int(self, index: int):
