@@ -8,12 +8,16 @@ from types import FunctionType
 from typing import Optional, Union, Sequence, Callable
 
 
-class OneIndexedList(collections.UserList):
+class OffsetList(collections.UserList):
 	"""
 	Behaves like a regular Python ``list``, but with the index starting at 1 instead of 0.
 
 	Also provides the ``dict``-like methods ``.keys()`` and ``.items()``
 	"""
+
+	def __init__(self, initlist=None, start_i=1):
+		self.start_i = start_i
+		super().__init__(initlist)
 
 	def _wrapped_index(self, index: [int, slice]) -> [int, slice]:
 		if isinstance(index, slice):
@@ -29,61 +33,66 @@ class OneIndexedList(collections.UserList):
 	def _wrapped_integer_index(self, index: [int, None]) -> [int, None]:
 		if index is None:
 			return None
-		if index == 0:
-			raise IndexError(
-				f"This {self.__class__.__name__} is an instance of `OneIndexedList`. Index 0 is forbidden.")
-		if index > 0:
-			return index - 1
-		else:  # In Python, negative indices are used to count backwards from the last element of a list
+		if index < 0:   # In Python, negative indices are used to count backwards from the last element of a list
 			return index
+		elif index < self.start_i:
+			raise IndexError(
+				f"This {self.__class__.__name__} is an `OffsetList` with start index {self.start_i}. Index {index} is forbidden.")
+		else:
+			return index - self.start_i
 
 	def __getitem__(self, index: [int, slice]) -> any:
 		wrapped_i = self._wrapped_index(index)
-		return super(OneIndexedList, self).__getitem__(wrapped_i)
+		if isinstance(index, slice):
+			return OffsetList(start_i=self.start_i, initlist=self.data[wrapped_i])
+		else:
+			return super().__getitem__(wrapped_i)
 
 	def __setitem__(self, index: [int, slice], value: any) -> None:
 		wrapped_i = self._wrapped_index(index)
-		super(OneIndexedList, self).__setitem__(wrapped_i, value)
+		super().__setitem__(wrapped_i, value)
 
 	def __delitem__(self, index: [int, slice]) -> None:
 		wrapped_i = self._wrapped_index(index)
-		super(OneIndexedList, self).__delitem__(wrapped_i)
+		super().__delitem__(wrapped_i)
 
 	def insert(self, index: [int, slice], value: any) -> None:
 		wrapped_i = self._wrapped_index(index)
-		super(OneIndexedList, self).insert(wrapped_i, value)
+		super().insert(wrapped_i, value)
 
 	def pop(self, index: Optional[int] = None) -> any:
 		if index is None:
 			return self.data.pop()
 		wrapped_i = self._wrapped_index(index)
-		return super(OneIndexedList, self).pop(wrapped_i)
+		return super().pop(wrapped_i)
 
 	def index(self, value: any, start: int = None, stop: int = None) -> int:
 		if start is None:
-			start = 1
+			start = self.start_i
 		if stop is None:
-			stop = len(self) + 1
+			stop = len(self) + self.start_i
 
 		wrapped_start = self._wrapped_index(start)
 		wrapped_stop = self._wrapped_index(stop)
-		wrapped_result = super(OneIndexedList, self).index(value, wrapped_start, wrapped_stop)
+		wrapped_result = super().index(value, wrapped_start, wrapped_stop)
 
-		return wrapped_result + 1
+		return wrapped_result + self.start_i
 
 	def __eq__(self, other) -> bool:
 		if other is None:
 			return False
-		if not isinstance(other, OneIndexedList):
-			# This is a judgement call. One could also follow ``UserList``, which allows comparisons to a simple ``list``.
-			raise NotImplementedError(f"Cannot compare a `OneIndexedList` to a {other.__class__.__name__}")
+		if not isinstance(other, OffsetList):
+			raise NotImplementedError(f"Cannot compare a `OffsetList` to a {other.__class__.__name__}")
+		else:
+			if self.start_i != other.start_i:
+				raise NotImplementedError(f"Cannot compare two `OffsetList`s with different offsets {self.start_i} and {other.start_i}")
 		return self.data == other.data
 
 	def __iter__(self):
 		yield from self.data.__iter__()
 
 	def keys(self):
-		return list(range(1, len(self.data) + 1))
+		return list(range(self.start_i, len(self.data) + self.start_i))
 
 	def indices(self):
 		"""Alias"""
@@ -95,6 +104,10 @@ class OneIndexedList(collections.UserList):
 		"""
 		return [(key, self[key]) for key in self.keys()]
 
+
+class OneIndexedList(OffsetList):
+	def __init__(self, initlist=None):
+		super().__init__(initlist, start_i=1)
 
 class FlexibleSequenceDefinition(enum.Enum):
 	DIRECT = enum.auto()

@@ -1,6 +1,6 @@
 import pytest
 
-from nonstd.sequence import OneIndexedList
+from nonstd.sequence import OneIndexedList, OffsetList
 
 
 class TestOneIndexedList:
@@ -153,7 +153,9 @@ class TestOneIndexedList:
 		assert OneIndexedList([1, 2]) == OneIndexedList([1, 2])
 		assert not OneIndexedList([]) == OneIndexedList([1])
 		assert not OneIndexedList([1, 2]) == None
-		with pytest.raises(NotImplementedError):
+		with pytest.raises(NotImplementedError, match="Cannot compare two `OffsetList`s with different offsets"):
+			OneIndexedList([1]) == OffsetList([1], start_i=2)
+		with pytest.raises(NotImplementedError, match="Cannot compare a `OffsetList` to a list"):
 			OneIndexedList([1]) == [1]
 
 	def test_len(self):
@@ -184,3 +186,25 @@ class TestOneIndexedList:
 
 	def test_idempotency(self):
 		assert OneIndexedList([1,2,3]) == OneIndexedList(OneIndexedList([1,2,3]))
+
+
+class TestOffsetList:
+	def test_access_integer(self):
+		subject = OffsetList([1,2,3], start_i=42)
+
+		with pytest.raises(IndexError, match="Index 41 is forbidden"):
+			subject[41]
+		with pytest.raises(IndexError,match="index out of range"):
+			subject[-4]
+
+		assert subject[42] == 1
+		assert subject[43] == 2
+
+		assert subject[-1] == 3
+		assert subject[-2] == 2
+
+	def test_access_slice(self):
+		subject = OffsetList([1,2,3], start_i=10)
+
+		assert subject[10:12] == OffsetList([1,2], start_i=10)
+		assert subject[:15] == OffsetList([1,2,3], start_i=10)
