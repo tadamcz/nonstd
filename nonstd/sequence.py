@@ -277,7 +277,13 @@ class FlexibleSequence(collections.abc.Sequence):
 
 class CatchNoneComparisons(contextlib.AbstractContextManager):
 	"""
-	Silently ignore comparisons to ``None`` that would raise a TypeError
+	Context manager to silently ignore comparisons to ``None`` that would raise a TypeError.
+
+	Usage: ::
+
+		with CatchNoneComparisons():
+			if number < 0:
+				print("it's negative!")
 	"""
 
 	def __exit__(self, exc_type, exc_value, traceback):
