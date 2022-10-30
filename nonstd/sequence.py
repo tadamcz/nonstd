@@ -2,10 +2,12 @@ import collections.abc
 import contextlib
 import enum
 import math
+from collections.abc import MutableMapping
 from itertools import count
 from math import inf
+from numbers import Number
 from types import FunctionType
-from typing import Optional, Union, Sequence, Callable
+from typing import Optional, Union, Sequence, Callable, Iterable
 
 
 class OffsetList(collections.UserList):
@@ -114,6 +116,107 @@ class FlexibleSequenceDefinition(enum.Enum):
 	CONSTANT = enum.auto()
 	CALLABLE = enum.auto()
 
+
+class RangeDict(MutableMapping):
+	@property
+	def step(self):
+		return self._step
+
+	def __init__(self, init_seq:Iterable=tuple(), start=0, step=1):
+		if not isinstance(init_seq, Iterable):
+			raise TypeError
+		if start < 0 or step < 0:
+			raise ValueError("start and step must be positive (would interfere with slicing)")
+		self._data = dict()
+		self._step = step
+		self.min_key = start
+		i = start
+		for value in init_seq:
+			self[i] = value
+			i += step
+
+	def __len__(self):
+		return len(self._data)
+
+	def __setitem__(self, key, value):
+		if len(self) == 0:
+			self.max_key = self.min_key = key
+			self._data[key] = value
+			return
+
+		if key in self:
+			self._data[key] = value
+			return
+
+		if key == self.min_key - self.step:
+			self.min_key = key
+			self._data[key] = value
+			return
+
+		if key == self.max_key + self.step:
+			self.max_key = key
+			self._data[key] = value
+			return
+
+		raise KeyError(f"Cannot set key {key} in RangeDict with min={self.min_key} max={self.max_key} step={self.step}")
+
+	def __delitem__(self, key):
+		if len(self) == 0:
+			raise KeyError("Cannot delete from empty RangeDict")
+		if key == self.max_key or key == self.min_key:
+			del self._data[key]
+		else:
+			raise KeyError(f"Can only delete keys: {self.min_key} (min) or {self.max_key} (max)")
+
+	def __getitem__(self, i):
+		if isinstance(i, slice):
+			if i.step is None:
+				step = self.step
+			else:
+				step = i.step
+			if i.start is None:
+				start = self.min_key
+			elif i.start>0:
+				start = i.start
+			else:
+				start= len(self) + i.start
+			if i.stop is None:
+				stop = self.max_key + 1
+			elif i.stop > 0:
+				stop = i.stop
+			else:
+				stop = len(self) + i.stop + 1
+
+			keys = range(start, stop, step)
+			if keys:
+				return RangeDict((self[k] for k in keys), start=self[keys[0]],step=step)
+			else:
+				return RangeDict(step=step)
+		else:
+			if i < 0:
+				i = len(self) + i
+			return self._data[i]
+
+	def __iter__(self):
+		"""A more list-like behaviour. A dict would iterate through the keys here. Judgement call."""
+		return iter(self._data.values())
+
+	def items(self):
+		return self._data.items()
+
+	def append(self, value):
+		if len(self) == 0:
+			self[self.min_key] = value
+			return
+		key = self.max_key + self.step
+		self[key] = value
+
+	def extend(self, iterable):
+		for value in iterable:
+			self.append(value)
+
+	def __repr__(self):
+		return str(self._data)
 
 class FlexibleSequence(collections.abc.Sequence):
 	def __init__(self, spec: Union[Sequence, object, Callable], length: Optional[int] = None,
