@@ -31,4 +31,27 @@ def is_arithmetic_sequence(sequence: Sequence) -> bool:
 	common_difference = diff[0]
 	return np.all(diff == pytest.approx(common_difference))
 
+def is_increasing(sequence: Sequence) -> bool:
+	sequence = np.asarray(sequence)
+	if len(sequence) == 0:
+		raise IndexError("Sequence of length 0")
+	return np.all(np.diff(sequence) > 0)
+
+def is_non_decreasing(sequence: Sequence) -> bool:
+	sequence = np.asarray(sequence)
+	if len(sequence) == 0:
+		raise IndexError("Sequence of length 0")
+	return np.all(np.diff(sequence) >= 0)
+
+def is_decreasing(sequence: Sequence) -> bool:
+	sequence = np.asarray(sequence)
+	if len(sequence) == 0:
+		raise IndexError("Sequence of length 0")
+	return np.all(np.diff(sequence) < 0)
+
+def is_non_increasing(sequence: Sequence) -> bool:
+	sequence = np.asarray(sequence)
+	if len(sequence) == 0:
+		raise IndexError("Sequence of length 0")
+	return np.all(np.diff(sequence) <= 0)
 
