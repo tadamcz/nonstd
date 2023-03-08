@@ -3,7 +3,7 @@ import pytest
 from scipy import stats
 
 from nonstd.distributions import lognormal, is_frozen_normal, is_frozen_lognormal, is_frozen_beta, \
-	FrozenTwoPieceUniform, FrozenCertainty
+	FrozenTwoPieceUniform, FrozenCertainty, lognormal_mu_sigma
 from nonstd.sequence_math import is_arithmetic_sequence
 
 
@@ -17,14 +17,44 @@ def sigma(request):
 	return request.param
 
 
-def test_lognormal(mu, sigma):
+@pytest.fixture(params=[3, 4], ids=lambda p: f"mean={p}")
+def mean(request):
+	return request.param
+
+
+@pytest.fixture(params=[5, 6], ids=lambda p: f"sd={p}")
+def sd(request):
+	return request.param
+
+
+def test_lognormal_scipy_wrapper(mu, sigma):
 	dist = lognormal(mu=mu, sigma=sigma)
 
 	# Expectation
 	assert dist.mean() == pytest.approx(np.exp(mu + sigma ** 2 / 2))
 
+	# Variance
+	assert dist.var() == pytest.approx(
+		(np.exp(sigma ** 2) - 1) * np.exp(2 * mu + sigma ** 2)
+	)
+
 	# Median
 	assert dist.ppf(0.5) == pytest.approx(np.exp(mu))
+
+
+def test_lognormal_mu_sigma_conversion(mean, sd):
+	mu, sigma = lognormal_mu_sigma(mean, sd)
+
+	# mean
+	assert mean == pytest.approx(
+		np.exp(mu + sigma ** 2 / 2)
+	)
+
+	# sd
+	assert sd == pytest.approx(
+		np.sqrt((np.exp(sigma ** 2) - 1) * np.exp(2 * mu + sigma ** 2))
+	)
+
 
 
 def test_is_frozen():

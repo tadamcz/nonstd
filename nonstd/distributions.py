@@ -9,11 +9,21 @@ TODO [Rob or Mahmoud might have good ideas]: figure out what to do about this 'f
 import numpy as np
 from scipy import stats
 
+def lognormal_mu_sigma(mean, sd):
+	"""
+	Get the ``mu`` and ``sigma`` parameters for a log-normal distribution with the given ``mean`` and ``sd``.
+	"""
+	var = sd ** 2
+	sigma = np.sqrt(np.log(var / (mean ** 2) + 1))
+
+	mu = np.log(mean) - (1 / 2) * np.log(var / (mean ** 2) + 1)
+
+	return mu, sigma
 
 def lognormal(mu, sigma):
 	"""
 	SciPy's ``lognorm`` does not take the ``mu`` and ``sigma`` parameters (it takes its own
-	``location`` and ``scale`` parameters).
+	``scale`` and ``s`` parameters).
 
 	This is a convenience wrapper that allows you to create a (frozen) SciPy log-normal distribution using ``mu`` and
 	``sigma``.
