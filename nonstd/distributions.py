@@ -190,15 +190,12 @@ def uniform_from_quantiles(
     if len(quantiles) != 2:
         raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
 
-    # Sort by keys (format expected by np.interp)
-    quantiles = dict(sorted(quantiles.items()))
-
     # Get the values of the quantiles
     ps = list(quantiles.keys())
     qs = list(quantiles.values())
 
     # Calculate the minimum and maximum values
-    f = interp1d(ps, qs, kind="linear", fill_value="extrapolate")
+    f = interp1d(ps, qs, kind="linear", fill_value="extrapolate", assume_sorted=True)
     min_val = f(0)
     max_val = f(1)
 
