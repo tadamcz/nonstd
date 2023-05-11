@@ -199,10 +199,47 @@ def uniform_from_quantiles(
     min_val = f(0)
     max_val = f(1)
 
-    # Create the uniform distribution instance
-    dist = uniform(min_val, max_val)
+    return uniform(min_val, max_val)
 
-    return dist
+
+def normal_from_quantiles(
+    quantiles: dict[Number, Number]
+) -> scipy.stats._distn_infrastructure.rv_frozen:
+    if len(quantiles) != 2:
+        raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
+
+    # Get the values of the quantiles
+    ps = list(quantiles.keys())
+    qs = list(quantiles.values())
+
+    mu, sigma = normal_params_from_quantiles(ps[0], qs[0], ps[1], qs[1])
+
+    return stats.norm(mu, sigma)
+
+
+def normal_params_from_quantiles(p1, x1, p2, x2) -> tuple[Number, Number]:
+    """Find parameters for a normal random variable X so that P(X < x1) = p1 and P(X < x2) = p2."""
+    denom = stats.norm.ppf(p2) - stats.norm.ppf(p1)
+    sigma = (x2 - x1) / denom
+    mu = (x1 * stats.norm.ppf(p2) - x2 * stats.norm.ppf(p1)) / denom
+    return mu, sigma
+
+
+def lognormal_from_quantiles(
+    quantiles: dict[Number, Number]
+) -> scipy.stats._distn_infrastructure.rv_frozen:
+    if len(quantiles) != 2:
+        raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
+
+    # Get the values of the quantiles
+    ps = list(quantiles.keys())
+    qs = list(quantiles.values())
+
+    # The log of our random variable is normally distributed with mean mu and standard deviation sigma
+    log_qs = np.log(qs)
+    mu, sigma = normal_params_from_quantiles(ps[0], log_qs[0], ps[1], log_qs[1])
+
+    return lognormal(mu, sigma)
 
 
 class Certainty(stats.rv_continuous):
