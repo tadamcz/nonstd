@@ -187,13 +187,6 @@ class FrozenTwoPieceUniform(stats._distn_infrastructure.rv_frozen):
 def uniform_from_quantiles(
     quantiles: dict[Number, Number]
 ) -> scipy.stats._distn_infrastructure.rv_frozen:
-    """
-    TODO: think about the interface here. Options:
-     - keep as is
-     - make a classmethod of distribution class that calls the __init__
-     - let distribution class __init__ take quantiles as arguments (seems most 'pythonic', but semantically weird, contrast to SciPy)
-     - ...?
-    """
     if len(quantiles) != 2:
         raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
 
