@@ -5,9 +5,13 @@ TODO [Rob or Mahmoud might have good ideas]: figure out what to do about this 'f
 	conventions but deviates in having separate classes explicitly named 'frozen' (which I admit has its own ugliness).
 	[1] https://github.com/scipy/scipy/blob/27aaa296daf8f5a81beeb6504ae405719abee626/scipy/stats/_continuous_distns.py#L8812
 """
+from numbers import Number
 
 import numpy as np
+import scipy.stats
 from scipy import stats
+from scipy.interpolate import interp1d
+
 
 def lognormal_mu_sigma(mean, sd):
 	"""
@@ -177,6 +181,34 @@ class FrozenTwoPieceUniform(stats._distn_infrastructure.rv_frozen):
 		min, p50, max = self.args
 		return f"FrozenTwoPieceUniform(min={min}, p50={p50}, max={max})"
 
+
+def uniform_from_quantiles(quantiles: dict[Number, Number]) -> scipy.stats._distn_infrastructure.rv_frozen:
+	"""
+	TODO: think about the interface here. Options:
+	 - keep as is
+	 - make a classmethod of distribution class that calls the __init__
+	 - let distribution class __init__ take quantiles as arguments (seems most 'pythonic', but semantically weird, contrast to SciPy)
+	 - ...?
+	"""
+	if len(quantiles) != 2:
+		raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
+
+	# Sort by keys (format expected by np.interp)
+	quantiles = dict(sorted(quantiles.items()))
+
+	# Get the values of the quantiles
+	ps = list(quantiles.keys())
+	qs = list(quantiles.values())
+
+	# Calculate the minimum and maximum values
+	f = interp1d(ps, qs, kind='linear', fill_value='extrapolate')
+	min_val = f(0)
+	max_val = f(1)
+
+	# Create the uniform distribution instance
+	dist = uniform(min_val, max_val)
+
+	return dist
 
 class Certainty(stats.rv_continuous):
 	"""
