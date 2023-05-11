@@ -3,7 +3,7 @@ import pytest
 from scipy import stats
 
 from nonstd.distributions import lognormal, is_frozen_normal, is_frozen_lognormal, is_frozen_beta, \
-	FrozenTwoPieceUniform, FrozenCertainty, lognormal_mu_sigma
+	FrozenTwoPieceUniform, FrozenCertainty, lognormal_mu_sigma, uniform
 from nonstd.sequence_math import is_arithmetic_sequence
 
 
@@ -40,6 +40,30 @@ def test_lognormal_scipy_wrapper(mu, sigma):
 
 	# Median
 	assert dist.ppf(0.5) == pytest.approx(np.exp(mu))
+
+@pytest.fixture(params=[-1, 0.5], ids=lambda p: f"u_left={p}")
+def u_left(request):
+	return request.param
+
+@pytest.fixture(params=[0, 2], ids=lambda p: f"u_right={p}")
+def u_right(request):
+	return request.param
+
+def test_uniform_scipy_wrapper(u_left, u_right):
+	dist = uniform(a=u_left, b=u_right)
+
+	u_min, u_max = sorted([u_left, u_right])
+
+	# Expectation
+	assert dist.mean() == pytest.approx((u_min + u_max) / 2)
+
+	assert dist.cdf(u_min) == 0
+	assert dist.cdf(u_max) == 1
+
+	# Order does not matter
+	dist_2 = uniform(a=u_right, b=u_left)
+	assert dist_2.mean() == dist.mean()
+	assert dist_2.std() == dist.std()
 
 
 def test_lognormal_mu_sigma_conversion(mean, sd):

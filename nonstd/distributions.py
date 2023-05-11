@@ -31,6 +31,16 @@ def lognormal(mu, sigma):
 	return stats.lognorm(scale=np.exp(mu), s=sigma)
 
 
+def uniform(a, b):
+	"""
+	SciPy's ``uniform`` does not take the extrema of the distribution (it takes its own ``loc`` and ``scale``).
+
+	This is a convenience wrapper that allows you to create a (frozen) SciPy uniform distribution using the extrema
+	``a`` and ``b``. ``a`` need not be less than ``b``.
+	"""
+	min, max = sorted([a, b])
+	return stats.uniform(loc=min, scale=max - min)
+
 def is_frozen_normal(distribution):
 	"""Type checker"""
 	if isinstance(distribution, stats._distn_infrastructure.rv_frozen):
