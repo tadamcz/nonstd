@@ -2,17 +2,21 @@ import pytest
 
 from nonstd.distributions import uniform_from_quantiles
 
+
 @pytest.fixture(params=[0, 1], ids=lambda p: f"q0={p}")
 def q0(request):
     return request.param
+
 
 @pytest.fixture(params=[2, 4.2], ids=lambda p: f"q1={p}")
 def q1(request):
     return request.param
 
-@pytest.fixture(params=[0, .1, .2, .7], ids=lambda p: f"p0={p}")
+
+@pytest.fixture(params=[0, 0.1, 0.2, 0.7], ids=lambda p: f"p0={p}")
 def p0(request):
     return request.param
+
 
 @pytest.fixture(params=[0.5], ids=lambda p: f"p1={p}")
 def p1(request):
