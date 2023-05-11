@@ -171,7 +171,7 @@ class TwoPieceUniform(stats.rv_continuous):
         return min, max
 
 
-class FrozenTwoPieceUniform(stats._distn_infrastructure.rv_frozen):
+class FrozenTwoPieceUniform(stats._distn_infrastructure.rv_continuous_frozen):
     """
     Helper to 'freeze' the distribution, i.e. fix its parameters. This appears to be the idiomatic way in SciPy.
     """
@@ -186,7 +186,7 @@ class FrozenTwoPieceUniform(stats._distn_infrastructure.rv_frozen):
 
 def uniform_from_quantiles(
     quantiles: dict[Number, Number]
-) -> scipy.stats._distn_infrastructure.rv_frozen:
+) -> scipy.stats._distn_infrastructure.rv_continuous_frozen:
     if len(quantiles) != 2:
         raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
 
@@ -204,7 +204,7 @@ def uniform_from_quantiles(
 
 def normal_from_quantiles(
     quantiles: dict[Number, Number]
-) -> scipy.stats._distn_infrastructure.rv_frozen:
+) -> scipy.stats._distn_infrastructure.rv_continuous_frozen:
     if len(quantiles) != 2:
         raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
 
@@ -227,7 +227,7 @@ def normal_params_from_quantiles(p1, x1, p2, x2) -> tuple[Number, Number]:
 
 def lognormal_from_quantiles(
     quantiles: dict[Number, Number]
-) -> scipy.stats._distn_infrastructure.rv_frozen:
+) -> scipy.stats._distn_infrastructure.rv_continuous_frozen:
     if len(quantiles) != 2:
         raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
 
@@ -278,7 +278,7 @@ class Certainty(stats.rv_continuous):
         return value, value
 
 
-class FrozenCertainty(stats._distn_infrastructure.rv_frozen):
+class FrozenCertainty(stats._distn_infrastructure.rv_continuous_frozen):
     """
     Helper to 'freeze' the distribution, i.e. fix its parameters. This appears to be the idiomatic way in SciPy.
     """
