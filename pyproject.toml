@@ -16,6 +16,7 @@ pytest-pycharm = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
+pytest-kwparametrize = "^0.0.3"
 
 [build-system]
 requires = ["poetry-core"]
