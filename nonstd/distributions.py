@@ -9,7 +9,7 @@ from numbers import Number
 
 import numpy as np
 import scipy.stats
-from scipy import stats
+from scipy import stats, optimize
 from scipy.interpolate import interp1d
 
 
@@ -240,6 +240,36 @@ def lognormal_from_quantiles(
     mu, sigma = normal_params_from_quantiles(ps[0], log_qs[0], ps[1], log_qs[1])
 
     return lognormal(mu, sigma)
+
+
+def beta_from_quantiles(
+    quantiles: dict[Number, Number]
+) -> scipy.stats._distn_infrastructure.rv_continuous_frozen:
+    if len(quantiles) != 2:
+        raise ValueError(f"Expected 2 quantiles, got {len(quantiles)}.")
+
+    # Get the values of the quantiles
+    ps = list(quantiles.keys())
+    qs = list(quantiles.values())
+
+    alpha_init, beta_init = 1, 1
+    fit = optimize.curve_fit(
+        lambda x, alpha, beta: stats.beta.cdf(x, alpha, beta),
+        xdata=qs,
+        ydata=ps,
+        p0=[alpha_init, beta_init],
+    )
+
+    # Since we estimated numerically, check that the estimated parameters give us the right quantiles
+    alpha, beta = fit[0]
+    fitted_ps = stats.beta.cdf(qs, alpha, beta)
+    if not np.allclose(fitted_ps, ps):
+        raise ValueError(
+            f"Could not fit beta distribution to quantiles. "
+            f"Expected probabilities {ps}, got fitted values {fitted_ps}."
+        )
+
+    return stats.beta(alpha, beta)
 
 
 class Certainty(stats.rv_continuous):

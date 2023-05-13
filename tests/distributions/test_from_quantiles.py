@@ -4,6 +4,7 @@ from nonstd.distributions import (
     uniform_from_quantiles,
     normal_from_quantiles,
     lognormal_from_quantiles,
+    beta_from_quantiles,
 )
 
 
@@ -34,6 +35,18 @@ def test_normal(quantiles):
 @pytest.mark.parametrize("quantiles", [{0.1: 1, 0.5: 5}, {0.1: 10, 0.5: 20}], ids=lambda x: str(x))
 def test_lognormal(quantiles):
     dist = lognormal_from_quantiles(quantiles)
+    for p, q in quantiles.items():
+        assert dist.cdf(q) == pytest.approx(p)
+    methods_do_not_raise(dist)
+
+
+@pytest.mark.parametrize(
+    "quantiles",
+    [{0.1: 0.2, 0.5: 0.85}, {0.1: 0.5, 0.5: 0.99}, {0.001: 0.5, 0.5: 0.99}],
+    ids=lambda x: str(x),
+)
+def test_beta(quantiles):
+    dist = beta_from_quantiles(quantiles)
     for p, q in quantiles.items():
         assert dist.cdf(q) == pytest.approx(p)
     methods_do_not_raise(dist)
