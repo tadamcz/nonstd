@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import codetiming
 
@@ -8,6 +9,8 @@ class Timer(codetiming.Timer):
     """
     Customized subclass of ``codetiming.Timer``
     """
+
+    name: Optional[str] = None
 
     def __post_init__(self):
         if self.name is not None:
