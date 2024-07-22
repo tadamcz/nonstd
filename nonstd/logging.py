@@ -5,7 +5,7 @@ from typing import TextIO
 
 
 class Tee(object):
-    def __init__(self, file=TextIO | str):
+    def __init__(self, file: TextIO | str):
         if isinstance(file, str):
             self.should_close = True
             file = open(file, "w")
