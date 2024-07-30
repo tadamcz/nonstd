@@ -2,9 +2,9 @@ from dataclasses import is_dataclass, fields
 from pydantic import BaseModel
 
 
-def nested_repr(obj, indent=2, split_str=True):
+def prepr(obj, indent=2, split_str=True):
     """
-    Returns a string representation of a nested object:
+    ``prepr`` (pretty repr) returns a string representation of a nested object:
         - using each object's ``__repr__``
         - with a readable and consistent indentation structure, similar to pretty-printed JSON
         (unlike ``pprint``)
