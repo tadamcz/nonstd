@@ -14,6 +14,8 @@ def nested_repr(obj, indent=2, split_str=True):
         - dataclasses
         - pydantic models
 
+    TODO: add support for sets, frozensets, and namedtuples
+
     Other objects just have their ``__repr__`` inserted as-is.
 
     According to the Python documentation:
