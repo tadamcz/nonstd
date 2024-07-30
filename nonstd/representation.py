@@ -1,8 +1,10 @@
 from dataclasses import is_dataclass, fields
 from pydantic import BaseModel
+import rich
+from rich.syntax import Syntax
 
 
-def prepr(obj, indent=2, split_str=True):
+def prepr(obj, indent=2, split_str=True, print_rich_theme=None):
     """
     ``prepr`` (pretty repr) returns a string representation of a nested object:
         - using each object's ``__repr__``
@@ -113,4 +115,7 @@ def prepr(obj, indent=2, split_str=True):
         result += " " * level + f"{bracket[1]}"
         return result
 
-    return _repr_nested(obj)
+    ret = _repr_nested(obj)
+    if print_rich_theme:
+        rich.print(Syntax(ret, "python", theme=print_rich_theme))
+    return ret

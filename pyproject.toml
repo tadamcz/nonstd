@@ -11,6 +11,7 @@ python = ">=3.8,<3.12"
 scipy = "^1.10.1"
 codetiming = "^1.4.0"
 pydantic = "^2.8.2"
+rich = "^13.7.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"
