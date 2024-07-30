@@ -37,17 +37,17 @@ def nested_repr(obj, indent=2, split_str=True):
     :param split_str: Whether to display strings containing newlines on multiple lines.
     """
 
-    def print_nested(obj, level=0):
+    def _repr_nested(obj, level=0):
         if isinstance(obj, str):
             return print_string(obj, level)
         elif is_dataclass(obj):
-            return print_dataclass(obj, level)
+            return repr_dataclass(obj, level)
         elif isinstance(obj, BaseModel):
-            return print_basemodel(obj, level)
+            return repr_pydantic(obj, level)
         elif isinstance(obj, dict):
-            return print_dict(obj, level)
+            return repr_dict(obj, level)
         elif isinstance(obj, (list, tuple)):
-            return print_sequence(obj, level)
+            return repr_sequence(obj, level)
         else:
             return repr(obj)
 
@@ -64,7 +64,7 @@ def nested_repr(obj, indent=2, split_str=True):
         else:
             return repr(s)
 
-    def print_dataclass(obj, level):
+    def repr_dataclass(obj, level):
         class_name = obj.__class__.__name__
         if not fields(obj):
             return f"{class_name}()"
@@ -73,44 +73,44 @@ def nested_repr(obj, indent=2, split_str=True):
             field_name = field.name
             field_value = getattr(obj, field_name)
             result += " " * (level + indent) + f"{field_name}="
-            result += print_nested(field_value, level + indent)
+            result += _repr_nested(field_value, level + indent)
             result += ",\n"
         result += " " * level + ")"
         return result
 
-    def print_basemodel(obj, level):
+    def repr_pydantic(obj, level):
         class_name = obj.__class__.__name__
         if not obj.__fields__:
             return f"{class_name}()"
         result = f"{class_name}(\n"
         for field_name, field_value in obj:
             result += " " * (level + indent) + f"{field_name}="
-            result += print_nested(field_value, level + indent)
+            result += _repr_nested(field_value, level + indent)
             result += ",\n"
         result += " " * level + ")"
         return result
 
-    def print_dict(d, level):
+    def repr_dict(d, level):
         if not d:
             return "{}"
         result = "{\n"
         for key, value in d.items():
             result += " " * (level + indent) + repr(key) + ": "
-            result += print_nested(value, level + indent)
+            result += _repr_nested(value, level + indent)
             result += ",\n"
         result += " " * level + "}"
         return result
 
-    def print_sequence(seq, level):
+    def repr_sequence(seq, level):
         if not seq:
             return "[]" if isinstance(seq, list) else "()"
         bracket = "[]" if isinstance(seq, list) else "()"
         result = f"{bracket[0]}\n"
         for item in seq:
             result += " " * (level + indent)
-            result += print_nested(item, level + indent)
+            result += _repr_nested(item, level + indent)
             result += ",\n"
         result += " " * level + f"{bracket[1]}"
         return result
 
-    return print_nested(obj)
+    return _repr_nested(obj)
